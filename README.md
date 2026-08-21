@@ -43,16 +43,38 @@ curl -o ~/.claude/statusline.sh \
 chmod +x ~/.claude/statusline.sh
 ```
 
-Then add this to `~/.claude/settings.json`:
+Then point Claude Code at it. **`~/.claude/settings.json` probably already has keys in it**
+(`permissions`, `enabledPlugins`, `tui`, and so on) — you need to *merge* the `statusLine`
+key in, not paste over the file. If you have `jq`, this does it safely:
+
+```bash
+jq '.statusLine = {"type": "command", "command": "~/.claude/statusline.sh"}' \
+  ~/.claude/settings.json > ~/.claude/settings.json.tmp \
+  && mv ~/.claude/settings.json.tmp ~/.claude/settings.json
+```
+
+Editing by hand instead? Add just this one key alongside whatever is already there:
+
+```json
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh"
+  }
+```
+
+So a config that started as `{"tui": "fullscreen"}` ends up as:
 
 ```json
 {
+  "tui": "fullscreen",
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.sh"
   }
 }
 ```
+
+Starting from no config at all, the whole file is just the `{ "statusLine": ... }` object.
 
 Requires `bash` and a Python 3 interpreter. No packages, no network calls.
 
