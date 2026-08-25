@@ -1,0 +1,5 @@
+# Normalize to LF in the repo. statusline.sh is run by bash under WSL and Git
+# Bash, and CRLF makes it unrunnable there -- so pin it regardless of the
+# checkout-side core.autocrlf, which Git for Windows defaults to true.
+* text=auto eol=lf
+*.sh text eol=lf
