@@ -34,6 +34,10 @@ DIM    = "\033[2m"
 GREEN  = "\033[32m"
 YELLOW = "\033[33m"
 RED    = "\033[31m"
+# Filled blocks, not coloured text. These only ever appear when the account
+# is close to being cut off, so they are meant to grab the eye first.
+BLOCK_WARN = "\033[43;30m"   # yellow fill, black text
+BLOCK_HOT  = "\033[41;97m"   # red fill, white text
 
 
 # Smart zone / dumb zone (Matt Pocock, dictionary-of-ai-coding). Quality decays
@@ -43,6 +47,7 @@ SMART_MAX = 125_000   # below this: sharp, good recall
 DUMB_MIN  = 150_000   # above this: sloppier, forgetful, more hallucinations
 WINDOW_WARN = 70      # only mention window % once the hard limit is in play
 LIMIT_WARN  = 75      # subscription windows stay hidden below this
+LIMIT_HOT   = 90      # red fill instead of yellow at or above this
 
 def git_dir(root):
     g = os.path.join(root, ".git")
@@ -90,7 +95,8 @@ def limit_seg(win, label):
     p = win.get("used_percentage")
     if not isinstance(p, (int, float)) or p < LIMIT_WARN:
         return None
-    return "%s%s %d%%%s" % (YELLOW if p < 90 else RED, label, round(p), RESET)
+    fill = BLOCK_WARN if p < LIMIT_HOT else BLOCK_HOT
+    return "%s %s %d%% %s" % (fill, label, round(p), RESET)
 
 
 def fmt_tokens(n):

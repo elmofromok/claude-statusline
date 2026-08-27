@@ -20,6 +20,11 @@ Segments, left to right:
 | `5h 91%`     | Claude subscription 5-hour usage window, only shown at 75%+ |
 | `7d 96%`     | Claude subscription 7-day usage window, only shown at 75%+ |
 
+The two usage windows render as a filled block rather than coloured text: yellow on
+black from 75%, white on red from 90%. They are the only thing on the line that can
+stop you working, and they are absent until they can, so they are worth the loudest
+treatment available.
+
 ## The smart / dumb zone
 
 The token segment is the point of this status line. It's built on
