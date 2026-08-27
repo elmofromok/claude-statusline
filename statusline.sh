@@ -42,6 +42,7 @@ RED    = "\033[31m"
 SMART_MAX = 125_000   # below this: sharp, good recall
 DUMB_MIN  = 150_000   # above this: sloppier, forgetful, more hallucinations
 WINDOW_WARN = 70      # only mention window % once the hard limit is in play
+LIMIT_WARN  = 75      # subscription windows stay hidden below this
 
 def git_dir(root):
     g = os.path.join(root, ".git")
@@ -78,6 +79,18 @@ def short_model(disp, mid):
     if not disp:
         return mid or "?"
     return re.sub(r"\s+context\)", ")", disp)
+
+
+def limit_seg(win, label):
+    """One Claude subscription rate limit window. Unlike the context segments
+    this is not about the conversation: it is the cap across every session, and
+    hitting it stops work outright. Hidden until it is worth acting on."""
+    if not isinstance(win, dict):
+        return None
+    p = win.get("used_percentage")
+    if not isinstance(p, (int, float)) or p < LIMIT_WARN:
+        return None
+    return "%s%s %d%%%s" % (YELLOW if p < 90 else RED, label, round(p), RESET)
 
 
 def fmt_tokens(n):
@@ -138,12 +151,20 @@ def main():
             label, color = "dumb", RED
         seg.append("%s%s %s%s" % (color, fmt_tokens(tokens), label, RESET))
 
+    if isinstance(cost, (int, float)):
+        seg.append("$%.2f" % cost)
+
+    # Everything below here is a warning: absent unless it needs attention.
+
     # The window limit is a separate failure mode: surface it only when near.
     if isinstance(pct, (int, float)) and pct >= WINDOW_WARN:
         seg.append("%s%d%% win%s" % (YELLOW if pct < 90 else RED, round(pct), RESET))
 
-    if isinstance(cost, (int, float)):
-        seg.append("$%.2f" % cost)
+    rl = d.get("rate_limits") or {}
+    for key, label in (("five_hour", "5h"), ("seven_day", "7d")):
+        lim = limit_seg(rl.get(key), label)
+        if lim:
+            seg.append(lim)
 
     sys.stdout.write(" ".join(seg) + "\n")
 

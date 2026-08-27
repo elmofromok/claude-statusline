@@ -15,8 +15,10 @@ Segments, left to right:
 | `my-project` | Current directory (basename only) |
 | `(main)`     | Git branch |
 | `84k smart`  | Absolute context tokens used, plus the quality zone |
-| `70% win`    | Context-window fill — only shown at 70%+, when the hard limit is actually in play |
 | `$1.37`      | Session cost so far |
+| `70% win`    | Context-window fill — only shown at 70%+, when the hard limit is actually in play |
+| `5h 91%`     | Claude subscription 5-hour usage window, only shown at 75%+ |
+| `7d 96%`     | Claude subscription 7-day usage window, only shown at 75%+ |
 
 ## The smart / dumb zone
 
@@ -34,6 +36,18 @@ whether the model is still sharp.
 
 Budget against those token counts. Window fill is a separate failure mode, so it gets its
 own segment and stays hidden until it matters.
+
+## Usage limits vs. context
+
+Two of these segments are percentages and they measure unrelated things.
+
+`70% win` is about **this conversation**: how full the context window is. Compact or start
+a new session and it resets.
+
+`5h` and `7d` are about **your Claude subscription**: the rolling usage caps across every
+session you run. A fresh session does not reset them, and hitting one stops work until the
+window rolls over. They only appear for Pro and Max subscribers, and only once past 75%,
+so on most days you never see them.
 
 ## Install
 
