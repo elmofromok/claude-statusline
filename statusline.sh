@@ -93,10 +93,15 @@ def limit_seg(win, label):
     if not isinstance(win, dict):
         return None
     p = win.get("used_percentage")
-    if not isinstance(p, (int, float)) or p < LIMIT_WARN:
+    if not isinstance(p, (int, float)):
+        return None
+    # Compare the rounded value, not the raw one: otherwise 89.9 and 90.0 both
+    # print "90%" but come out in different colours.
+    p = round(p)
+    if p < LIMIT_WARN:
         return None
     fill = BLOCK_WARN if p < LIMIT_HOT else BLOCK_HOT
-    return "%s %s %d%% %s" % (fill, label, round(p), RESET)
+    return "%s %s %d%% %s" % (fill, label, p, RESET)
 
 
 def fmt_tokens(n):
