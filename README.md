@@ -4,7 +4,7 @@ A status line for [Claude Code](https://claude.com/claude-code) that tells you w
 model is about to get dumber.
 
 ```
-[Opus 5] my-project (main*) 84k smart $1.37
+[Opus 5] my-project (main) 84k smart $1.37
 ```
 
 Segments, left to right:
@@ -13,7 +13,7 @@ Segments, left to right:
 |--------------|---------|
 | `[Opus 5]`   | Active model's display name |
 | `my-project` | Current directory (basename only) |
-| `(main*)`    | Git branch; a red `*` means the working tree is dirty |
+| `(main)`     | Git branch |
 | `84k smart`  | Absolute context tokens used, plus the quality zone |
 | `70% win`    | Context-window fill — only shown at 70%+, when the hard limit is actually in play |
 | `$1.37`      | Session cost so far |
@@ -80,19 +80,14 @@ Requires `bash` and a Python 3 interpreter. No packages, no network calls.
 
 ## Design notes
 
-**It never blocks.** This script runs on every assistant message, and `git status` costs
-~1.25s on a Windows drive mounted under WSL (`/mnt/c`). So the dirty flag is read from a
-10-second cache in the temp dir, and a refresh is kicked off as a fully detached child
-process. Worst case the `*` is ten seconds stale; it is never worth a stall.
+**It never blocks, because it never shells out.** This script runs on every assistant
+message, so it does no subprocess work at all. The branch is read straight out of
+`.git/HEAD` rather than by invoking `git`, which on a Windows drive mounted under WSL
+(`/mnt/c`) costs over a second per call.
 
-**It's portable between WSL and Windows Git Bash.** Two things bite you there:
-
-- `python3` on Windows often resolves to a Microsoft Store alias stub that prints an
-  install advert instead of running anything, so any candidate under `WindowsApps` is
-  skipped when picking an interpreter.
-- Windows paths contain backslashes that a shell command string would mangle, so the
-  background refresh is spawned as `[sys.executable, "-c", SRC, root, cache]` — paths
-  travel as argv entries and never touch a shell.
+**It's portable between WSL and Windows Git Bash.** `python3` on Windows often resolves to
+a Microsoft Store alias stub that prints an install advert instead of running anything, so
+any candidate under `WindowsApps` is skipped when picking an interpreter.
 
 **Claude Code's JSON arrives on stdin**, which the heredoc that carries the Python source
 also needs, so the payload is handed over through an environment variable instead.
