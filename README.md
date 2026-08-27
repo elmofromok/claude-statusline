@@ -4,19 +4,26 @@ A status line for [Claude Code](https://claude.com/claude-code) that tells you w
 model is about to get dumber.
 
 ```
-[Opus 5] my-project (main*) 84k smart $1.37
+[Opus 5] my-project (main) 84k smart $1.37
 ```
 
 Segments, left to right:
 
 | Segment      | Meaning |
 |--------------|---------|
-| `[Opus 5]`   | Active model's display name |
+| `[Opus 5]`   | Active model; `Opus 5 (1M context)` renders as `Opus 5 (1M)` |
 | `my-project` | Current directory (basename only) |
-| `(main*)`    | Git branch; a red `*` means the working tree is dirty |
+| `(main)`     | Git branch |
 | `84k smart`  | Absolute context tokens used, plus the quality zone |
-| `70% win`    | Context-window fill — only shown at 70%+, when the hard limit is actually in play |
 | `$1.37`      | Session cost so far |
+| `70% win`    | Context-window fill — only shown at 70%+, when the hard limit is actually in play |
+| `5h 91%`     | Claude subscription 5-hour usage window, only shown at 75%+ |
+| `7d 96%`     | Claude subscription 7-day usage window, only shown at 75%+ |
+
+The two usage windows render as a filled block rather than coloured text: yellow on
+black from 75%, white on red from 90%. They are the only thing on the line that can
+stop you working, and they are absent until they can, so they are worth the loudest
+treatment available.
 
 ## The smart / dumb zone
 
@@ -34,6 +41,18 @@ whether the model is still sharp.
 
 Budget against those token counts. Window fill is a separate failure mode, so it gets its
 own segment and stays hidden until it matters.
+
+## Usage limits vs. context
+
+Two of these segments are percentages and they measure unrelated things.
+
+`70% win` is about **this conversation**: how full the context window is. Compact or start
+a new session and it resets.
+
+`5h` and `7d` are about **your Claude subscription**: the rolling usage caps across every
+session you run. A fresh session does not reset them, and hitting one stops work until the
+window rolls over. They only appear for Pro and Max subscribers, and only once past 75%,
+so on most days you never see them.
 
 ## Install
 
@@ -80,19 +99,14 @@ Requires `bash` and a Python 3 interpreter. No packages, no network calls.
 
 ## Design notes
 
-**It never blocks.** This script runs on every assistant message, and `git status` costs
-~1.25s on a Windows drive mounted under WSL (`/mnt/c`). So the dirty flag is read from a
-10-second cache in the temp dir, and a refresh is kicked off as a fully detached child
-process. Worst case the `*` is ten seconds stale; it is never worth a stall.
+**It never blocks, because it never shells out.** This script runs on every assistant
+message, so it does no subprocess work at all. The branch is read straight out of
+`.git/HEAD` rather than by invoking `git`, which on a Windows drive mounted under WSL
+(`/mnt/c`) costs over a second per call.
 
-**It's portable between WSL and Windows Git Bash.** Two things bite you there:
-
-- `python3` on Windows often resolves to a Microsoft Store alias stub that prints an
-  install advert instead of running anything, so any candidate under `WindowsApps` is
-  skipped when picking an interpreter.
-- Windows paths contain backslashes that a shell command string would mangle, so the
-  background refresh is spawned as `[sys.executable, "-c", SRC, root, cache]` — paths
-  travel as argv entries and never touch a shell.
+**It's portable between WSL and Windows Git Bash.** `python3` on Windows often resolves to
+a Microsoft Store alias stub that prints an install advert instead of running anything, so
+any candidate under `WindowsApps` is skipped when picking an interpreter.
 
 **Claude Code's JSON arrives on stdin**, which the heredoc that carries the Python source
 also needs, so the payload is handed over through an environment variable instead.
