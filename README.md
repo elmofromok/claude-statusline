@@ -11,7 +11,7 @@ Segments, left to right:
 
 | Segment      | Meaning |
 |--------------|---------|
-| `[Opus 5]`   | Active model's display name |
+| `[Opus 5]`   | Active model; `Opus 5 (1M context)` renders as `Opus 5 (1M)` |
 | `my-project` | Current directory (basename only) |
 | `(main)`     | Git branch |
 | `84k smart`  | Absolute context tokens used, plus the quality zone |

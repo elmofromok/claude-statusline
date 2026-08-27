@@ -72,6 +72,14 @@ def branch_name(root):
     return head[:7] if head else None
 
 
+def short_model(disp, mid):
+    """"Opus 5 (1M context)" -> "Opus 5 (1M)". The word "context" is the only
+    part that varies with nothing, and it costs eight always-on characters."""
+    if not disp:
+        return mid or "?"
+    return re.sub(r"\s+context\)", ")", disp)
+
+
 def fmt_tokens(n):
     n = int(n)
     return "%dk" % round(n / 1000.0) if n >= 1000 else str(n)
@@ -97,12 +105,12 @@ def main():
     except Exception:
         d = {}
 
-    model = (d.get("model") or {}).get("display_name") or "?"
+    mdl   = d.get("model") or {}
     cwd   = (d.get("workspace") or {}).get("current_dir") or d.get("cwd") or ""
     pct   = (d.get("context_window") or {}).get("used_percentage")
     cost  = (d.get("cost") or {}).get("total_cost_usd")
 
-    seg = ["[%s]" % model]
+    seg = ["[%s]" % short_model(mdl.get("display_name"), mdl.get("id"))]
 
     parts = [x for x in re.split(r"[/\\]", cwd) if x]
     if parts:
